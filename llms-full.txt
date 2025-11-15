@@ -1,0 +1,2528 @@
+# FARCASTER MINI APPS & NEYNAR - COMPLETE DOCUMENTATION FOR LLMs
+
+This document contains comprehensive documentation for building applications on Farcaster using Mini Apps and Neynar API.
+
+================================================================================
+SECTION 1: FARCASTER MINI APPS OVERVIEW
+================================================================================
+
+## What are Farcaster Mini Apps?
+
+Farcaster Mini Apps are web applications built with HTML, CSS, and JavaScript that can be discovered and used within Farcaster clients. Using the SDK, developers can access native Farcaster features like authentication, sending notifications, and interacting with user wallets.
+
+Source: https://miniapps.farcaster.xyz/
+
+## Why Mini Apps?
+
+Mini Apps enable developers to distribute native-like apps to Farcaster users with these key benefits:
+
+1. SHIP FAST
+   - Go from idea to users in hours—no app store reviews
+   - Build with HTML, CSS, and JavaScript
+   - Use Mini App SDK to deliver native-like apps
+
+2. GET DISCOVERED
+   - Social feed discovery puts users just 1-click away
+   - Viral growth mechanics are built in
+   - Users can find new applications through Mini App stores
+
+3. RETAIN USERS
+   - Mobile notifications re-engage users
+   - Bring users back when something new happens
+   - Users can save favorite Mini Apps for easy access
+
+4. TRANSACT SEAMLESSLY
+   - Integrated Ethereum Wallet provides permissionless financial rails
+   - Users can send money, buy art, or donate in a single click
+   - Solana wallet integration also available
+
+5. BUILD SOCIAL
+   - Users are signed into Mini Apps without forms or passwords
+   - Leverage Farcaster's rich social data
+   - Create engaging social experiences
+
+================================================================================
+SECTION 2: GETTING STARTED WITH MINI APPS
+================================================================================
+
+## Prerequisites
+
+- Node.js version 22.11.0 or higher
+- Package manager (npm, pnpm, or yarn)
+- Developer Mode enabled in Farcaster client
+
+## Quick Start - New Project
+
+```bash
+npx @farcaster/create-mini-app
+```
+
+## Add to Existing Project
+
+```bash
+npm install @farcaster/frame-sdk
+```
+
+## Basic Setup
+
+```javascript
+import sdk from '@farcaster/frame-sdk';
+
+// Initialize and load your app
+sdk.actions.ready();
+```
+
+The `sdk.actions.ready()` call is CRITICAL - it signals to the Farcaster client that your app is ready to display content.
+
+================================================================================
+SECTION 3: MINI APPS SDK FEATURES
+================================================================================
+
+## Context API
+
+Access information about the user and app context:
+
+```javascript
+const context = await sdk.context;
+console.log(context.user); // User information
+console.log(context.client); // Client information
+```
+
+## Quick Auth
+
+Seamlessly authenticate Farcaster users to create secure sessions:
+
+- Uses Sign in with Farcaster behind the scenes
+- Returns standard JWT for easy server verification
+- Can be used as session token
+- No forms or passwords required
+
+```javascript
+const { token, user } = await sdk.auth.authenticate();
+```
+
+## Actions
+
+Key actions available in the SDK:
+
+```javascript
+// Signal app is ready to display
+sdk.actions.ready();
+
+// Add Mini App to user's collection
+const result = await sdk.actions.addMiniApp();
+
+// Open URL in new context
+sdk.actions.openUrl(url);
+
+// Close the Mini App
+sdk.actions.close();
+```
+
+## Haptics
+
+Provide haptic feedback:
+
+```javascript
+// Light impact
+sdk.actions.haptics.light();
+
+// Medium impact
+sdk.actions.haptics.medium();
+
+// Heavy impact
+sdk.actions.haptics.heavy();
+
+// Success pattern
+sdk.actions.haptics.success();
+
+// Warning pattern
+sdk.actions.haptics.warning();
+
+// Error pattern
+sdk.actions.haptics.error();
+```
+
+## Back Navigation
+
+Control native back button behavior:
+
+```javascript
+// Enable back button
+sdk.actions.navigation.enableBackButton();
+
+// Disable back button
+sdk.actions.navigation.disableBackButton();
+
+// Listen for back button press
+sdk.on('backButton', () => {
+  // Handle back navigation
+});
+```
+
+## Events System
+
+Listen to various SDK events:
+
+```javascript
+// Mini App detected
+sdk.on('miniAppDetected', (data) => {
+  console.log('Running in Mini App environment');
+});
+
+// User context changed
+sdk.on('contextChanged', (context) => {
+  console.log('New context:', context);
+});
+
+// Notification permission changed
+sdk.on('notificationPermissionChanged', (permission) => {
+  console.log('Notification permission:', permission);
+});
+```
+
+================================================================================
+SECTION 4: WALLET INTEGRATION
+================================================================================
+
+## Ethereum Wallet Integration
+
+Mini Apps can interact with users' Ethereum wallets:
+
+```javascript
+import { useAccount, useConnect, useDisconnect } from 'wagmi';
+
+function WalletComponent() {
+  const { address, isConnected } = useAccount();
+  const { connect, connectors } = useConnect();
+  const { disconnect } = useDisconnect();
+
+  return (
+    <div>
+      {isConnected ? (
+        <>
+          <p>Connected: {address}</p>
+          <button onClick={() => disconnect()}>Disconnect</button>
+        </>
+      ) : (
+        <button onClick={() => connect({ connector: connectors[0] })}>
+          Connect Wallet
+        </button>
+      )}
+    </div>
+  );
+}
+```
+
+## Solana Wallet Integration
+
+SDK enables Mini Apps to interact with Solana wallets via Wallet Standard:
+
+```javascript
+import { useWallet } from '@solana/wallet-adapter-react';
+import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
+
+function SolanaWallet() {
+  const { publicKey, connected, signTransaction } = useWallet();
+
+  return (
+    <div>
+      <WalletMultiButton />
+      {connected && (
+        <p>Connected: {publicKey.toString()}</p>
+      )}
+    </div>
+  );
+}
+```
+
+For React apps: Use React hooks from Wallet Adapter (similar to Wagmi)
+For non-React apps: Wallet Adapter provides lower-level interface
+
+## Detecting Chains & Capabilities
+
+```javascript
+const capabilities = await sdk.wallet.getCapabilities();
+console.log('Supported chains:', capabilities.chains);
+console.log('Features:', capabilities.features);
+```
+
+================================================================================
+SECTION 5: SHARING YOUR MINI APP
+================================================================================
+
+## Embeds in Social Feed
+
+Mini Apps can be shared in social feeds using special embeds that allow users to interact directly from their feed.
+
+## Making URLs Embeddable
+
+Every URL in your app can be made embeddable by adding meta tags (similar to Open Graph):
+
+```html
+<head>
+  <!-- Mini App Embed Meta Tags -->
+  <meta property="fc:frame" content="vNext" />
+  <meta property="fc:frame:image" content="https://example.com/preview.png" />
+  <meta property="fc:frame:button:1" content="Open App" />
+  <meta property="fc:frame:button:1:action" content="launch" />
+  <meta property="fc:frame:button:1:target" content="https://your-miniapp.com" />
+</head>
+```
+
+## Share Extensions
+
+Users can share content from other apps directly to your Mini App:
+
+```javascript
+// Register share handler
+sdk.share.register({
+  accept: ['image/*', 'text/plain'],
+  handler: async (data) => {
+    console.log('Received shared data:', data);
+  }
+});
+```
+
+================================================================================
+SECTION 6: NOTIFICATIONS
+================================================================================
+
+## Requesting Notification Permission
+
+```javascript
+const result = await sdk.actions.addMiniApp();
+
+if (result.added && result.notificationDetails) {
+  const notificationToken = result.notificationDetails.token;
+  // Send token to your backend to send notifications later
+  await saveTokenToBackend(notificationToken);
+}
+```
+
+## Notification Lifecycle
+
+1. User adds Mini App to their collection
+2. App receives notification token
+3. Backend stores token
+4. Send notifications using Neynar API (see Neynar section)
+
+================================================================================
+SECTION 7: PUBLISHING YOUR MINI APP
+================================================================================
+
+## App Discovery & Search
+
+Mini Apps can be discovered through:
+- Social feed embeds
+- Mini App directory/store
+- Search functionality
+- Direct links
+- Viral sharing
+
+## Manifest vs Embed Guide
+
+TWO WAYS TO DISTRIBUTE:
+
+1. MANIFEST (Recommended)
+   - Full Mini App experience
+   - Access to all SDK features
+   - User adds app to collection
+   - Can send notifications
+
+2. EMBED
+   - Lightweight sharing
+   - Appears in social feed
+   - Limited SDK features
+   - Good for viral content
+
+## Domain Migration
+
+If you need to change your Mini App domain:
+
+```javascript
+sdk.experimental.signManifest({
+  oldDomain: 'old-domain.com',
+  newDomain: 'new-domain.com'
+});
+```
+
+================================================================================
+SECTION 8: UNIVERSAL LINKS
+================================================================================
+
+Universal Links enable deep linking into your Mini App:
+
+```javascript
+// Handle universal link
+sdk.on('universalLink', (url) => {
+  const path = new URL(url).pathname;
+  // Route to appropriate page
+  router.push(path);
+});
+```
+
+## Setting up Universal Links
+
+1. Add Apple App Site Association file
+2. Configure your domain
+3. Register universal link handler in SDK
+
+================================================================================
+SECTION 9: MINI APP DETECTION
+================================================================================
+
+Detect if your app is running inside a Mini App context:
+
+```javascript
+const isMiniApp = sdk.context.client?.miniApp;
+
+if (isMiniApp) {
+  // Running as Mini App - use SDK features
+  sdk.actions.ready();
+} else {
+  // Running as regular web app - fallback behavior
+  console.log('Not running in Mini App context');
+}
+```
+
+================================================================================
+SECTION 10: COMPATIBILITY
+================================================================================
+
+Goal: Build once, ship anywhere
+
+## Known Compatibility Issues
+
+Some features may not work consistently across all Farcaster clients:
+
+- `sdk.actions.addMiniApp` - Being fixed by Base App
+- `sdk.experimental.signManifest` - Being fixed by Base App
+- Back navigation behavior may vary
+- Haptics support varies by platform
+
+Always test across multiple clients (Warpcast, Base App, etc.)
+
+================================================================================
+SECTION 11: NEYNAR OVERVIEW
+================================================================================
+
+## What is Neynar?
+
+Neynar is a developer platform that makes building on Farcaster easy. It provides:
+
+- REST APIs for Farcaster data
+- SDKs for multiple languages
+- Webhooks for real-time events
+- Managed infrastructure
+- Analytics and insights
+
+Source: https://docs.neynar.com/
+
+## Core Farcaster Concepts
+
+### FID (Farcaster ID)
+- Permanent numerical identifier for each user
+- Example: Dan Romero = FID 3
+- All profile data maps to this FID
+
+### Casts
+- Unit of content on Farcaster (like tweets)
+- Each cast has unique hash
+- Can contain text, media, embeds, metadata
+- Can be threaded (replies)
+
+### Social Graph
+- Users follow each other
+- Creates personalized feeds
+- Determines content visibility
+
+### Channels
+- Topic-based communities
+- Similar to subreddits or Discord channels
+- Casts can be posted to channels
+
+### Signers
+- Keys that allow writing to Farcaster
+- Managed by Neynar or self-hosted
+- Required for posting casts, reactions, etc.
+
+================================================================================
+SECTION 12: NEYNAR SETUP
+================================================================================
+
+## Getting API Key
+
+1. Create account at https://neynar.com/
+2. Get API key from dashboard
+3. Store securely in environment variables
+
+## Installing Neynar SDK
+
+```bash
+# Node.js SDK
+npm install @neynar/nodejs-sdk
+
+# React SDK
+npm install @neynar/react
+```
+
+## Initialize Client
+
+```typescript
+import { NeynarAPIClient, Configuration } from "@neynar/nodejs-sdk";
+
+const config = new Configuration({
+  apiKey: process.env.NEYNAR_API_KEY,
+});
+
+const client = new NeynarAPIClient(config);
+```
+
+## TypeScript Configuration
+
+```json
+{
+  "compilerOptions": {
+    "module": "ESNext",
+    "moduleResolution": "node",
+    "target": "ESNext",
+    "esModuleInterop": true,
+    "skipLibCheck": true
+  },
+  "ts-node": {
+    "esm": true
+  }
+}
+```
+
+## Package.json
+
+```json
+{
+  "type": "module",
+  "scripts": {
+    "start": "node --loader ts-node/esm index.ts"
+  },
+  "dependencies": {
+    "@neynar/nodejs-sdk": "^2.0.5",
+    "typescript": "^5.6.3",
+    "ts-node": "^10.9.2"
+  }
+}
+```
+
+================================================================================
+SECTION 13: FETCHING USER DATA WITH NEYNAR
+================================================================================
+
+## Fetch Users by FID
+
+```typescript
+const fids = [2, 3, 6131];
+const viewerFid = 6131; // Optional: for viewer-specific context
+
+const response = await client.fetchBulkUsers({ fids, viewerFid });
+
+console.log(response.users);
+// Returns array of user objects with:
+// - fid, username, display_name
+// - pfp_url, custody_address
+// - follower_count, following_count
+// - verifications, verified_addresses
+// - power_badge status
+```
+
+## Fetch User by Wallet Address
+
+```typescript
+const user = await client.fetchUserByWalletAddress({
+  address: "0x6b0bda3f2ffed5efc83fa8c024acff1dd45793f1"
+});
+
+console.log(user);
+// Returns user associated with that wallet
+```
+
+## Fetch User by Username
+
+```typescript
+const user = await client.fetchUserByUsername({
+  username: "dwr.eth"
+});
+
+console.log(user);
+```
+
+## Search Users
+
+```typescript
+const results = await client.searchUser({
+  q: "dan",
+  limit: 10
+});
+
+console.log(results.users);
+```
+
+## Mutual Follows/Followers
+
+```typescript
+// Get mutual followers between two users
+const mutual = await client.fetchMutualFollowers({
+  fid: 3,
+  targetFid: 6131
+});
+
+console.log(mutual.users);
+```
+
+## User Mutes, Blocks, Bans
+
+```typescript
+// Check if user is muted
+const mutes = await client.fetchUserMutes({
+  fid: 3
+});
+
+// Check blocks
+const blocks = await client.fetchUserBlocks({
+  fid: 3
+});
+```
+
+================================================================================
+SECTION 14: FETCHING CAST DATA WITH NEYNAR
+================================================================================
+
+## Fetch Cast by Hash
+
+```typescript
+const cast = await client.fetchCast({
+  hash: "0x5300d6bd8f604c0b5fe7d573e02bb1489362f4d3"
+});
+
+console.log(cast);
+// Returns:
+// - hash, author, text, timestamp
+// - embeds, reactions, replies
+// - thread_hash, parent info
+// - channel info
+```
+
+## Cast Stream (Real-time)
+
+```typescript
+// Get recent casts as stream
+const stream = await client.fetchCastStream({
+  limit: 100
+});
+
+console.log(stream.casts);
+```
+
+## Parse Farcaster URLs
+
+```typescript
+// Convert Farcaster URL to data
+const data = await client.lookupCastOrUser({
+  identifier: "https://warpcast.com/dwr.eth/0x5300d6b"
+});
+
+console.log(data);
+```
+
+## Archive Casts
+
+For bulk historical data, use Neynar's archive API.
+
+================================================================================
+SECTION 15: FETCHING FEEDS WITH NEYNAR
+================================================================================
+
+## User's Following Feed
+
+```typescript
+import { FeedType } from "@neynar/nodejs-sdk/build/api";
+
+const feed = await client.fetchFeed({
+  feedType: FeedType.Following,
+  fid: 3, // User whose feed to fetch
+  withRecasts: true,
+  limit: 50,
+  viewerFid: 6131 // Optional: for viewer context
+});
+
+console.log(feed.casts);
+```
+
+## Trending Feed
+
+```typescript
+const trending = await client.fetchTrendingFeed({
+  limit: 25,
+  timeWindow: "24h" // 1h, 6h, 24h, 7d
+});
+
+console.log(trending.casts);
+```
+
+## Channel Feed
+
+```typescript
+const channelFeed = await client.fetchChannelFeed({
+  channelId: "farcaster",
+  limit: 25,
+  withRecasts: false
+});
+
+console.log(channelFeed.casts);
+```
+
+## Feed by User FID
+
+```typescript
+// Get all casts by specific user
+const userCasts = await client.fetchUserCasts({
+  fid: 3,
+  limit: 50,
+  viewerFid: 6131
+});
+
+console.log(userCasts.casts);
+```
+
+## Casts by Embed URL
+
+```typescript
+// Find casts containing specific URL
+const casts = await client.fetchCastsByEmbed({
+  url: "https://example.com/article",
+  limit: 25
+});
+
+console.log(casts.casts);
+```
+
+## Custom Feed Algorithm
+
+Use Neynar Feed API to create custom feeds:
+
+```typescript
+const customFeed = await client.fetchFeed({
+  feedType: FeedType.Filter,
+  filterType: "channel_id",
+  channelId: "technology",
+  withRecasts: true,
+  limit: 50
+});
+```
+
+================================================================================
+SECTION 16: WRITING DATA TO FARCASTER
+================================================================================
+
+## Choose the Right Signer
+
+THREE OPTIONS:
+
+1. MANAGED SIGNERS (Recommended)
+   - Neynar manages keys
+   - Easy to implement
+   - Best for most use cases
+
+2. DEVELOPER-MANAGED SIGNERS
+   - You manage keys
+   - More control
+   - More complexity
+
+3. USER-OWNED SIGNERS
+   - User manages their own keys
+   - Maximum security
+   - Most complex
+
+## Create Managed Signer
+
+```typescript
+const signer = await client.createSigner();
+
+console.log(signer.signer_uuid);
+console.log(signer.public_key);
+console.log(signer.status); // pending_approval
+
+// User must approve signer in Farcaster client
+// Once approved, status becomes 'approved'
+```
+
+## Publish Cast
+
+```typescript
+const cast = await client.publishCast({
+  signerUuid: "your-signer-uuid",
+  text: "Hello Farcaster! 👋",
+  embeds: [
+    { url: "https://example.com" }
+  ]
+});
+
+console.log(cast.hash);
+```
+
+## Reply to Cast
+
+```typescript
+const reply = await client.publishCast({
+  signerUuid: "your-signer-uuid",
+  text: "Great point!",
+  parent: "0x5300d6bd8f604c0b5fe7d573e02bb1489362f4d3" // Parent cast hash
+});
+```
+
+## Post to Channel
+
+```typescript
+const channelCast = await client.publishCast({
+  signerUuid: "your-signer-uuid",
+  text: "Posted to channel",
+  channelId: "farcaster"
+});
+```
+
+## Like a Cast
+
+```typescript
+await client.publishReaction({
+  signerUuid: "your-signer-uuid",
+  reactionType: "like",
+  target: "cast-hash"
+});
+```
+
+## Recast
+
+```typescript
+await client.publishReaction({
+  signerUuid: "your-signer-uuid",
+  reactionType: "recast",
+  target: "cast-hash"
+});
+```
+
+## Delete Cast
+
+```typescript
+await client.deleteCast({
+  signerUuid: "your-signer-uuid",
+  targetHash: "cast-hash"
+});
+```
+
+================================================================================
+SECTION 17: MINI APP NOTIFICATIONS WITH NEYNAR
+================================================================================
+
+## Request Notification Permission (Frontend)
+
+```typescript
+import { useMiniApp } from '@neynar/react';
+
+export default function NotificationSetup() {
+  const { isSDKLoaded, addMiniApp } = useMiniApp();
+
+  const handleAddMiniApp = async () => {
+    if (!isSDKLoaded) {
+      console.error('SDK not loaded');
+      return;
+    }
+
+    const result = await addMiniApp();
+    
+    if (result.added && result.notificationDetails) {
+      // Send token to backend
+      await fetch('/api/save-notification-token', {
+        method: 'POST',
+        body: JSON.stringify({
+          token: result.notificationDetails.token,
+          userId: result.notificationDetails.userId
+        })
+      });
+    }
+  };
+
+  return (
+    <button onClick={handleAddMiniApp}>
+      Enable Notifications
+    </button>
+  );
+}
+```
+
+## Send Notifications (Backend)
+
+```typescript
+import { NeynarAPIClient } from "@neynar/nodejs-sdk";
+
+const client = new NeynarAPIClient(process.env.NEYNAR_API_KEY);
+
+async function sendNotification({
+  targetFids = [],
+  filters = {},
+  notification
+}) {
+  try {
+    const response = await client.publishFrameNotifications({
+      targetFids,
+      filters,
+      notification
+    });
+
+    return {
+      success: true,
+      data: response
+    };
+  } catch (error) {
+    console.error("Failed to send notification:", error);
+    return {
+      success: false,
+      error: error.message
+    };
+  }
+}
+
+// Example usage
+const result = await sendNotification({
+  targetFids: [], // Empty = all users who added the app
+  filters: {
+    exclude_fids: [420, 69],
+    following_fid: 3, // Only send to followers of FID 3
+    minimum_user_score: 0.5, // Quality filter
+    near_location: {
+      latitude: 34.052235,
+      longitude: -118.243683,
+      radius: 50000 // meters
+    }
+  },
+  notification: {
+    title: "🚀 New Feature!",
+    body: "Check out what's new in the app",
+    target_url: "https://your-miniapp.com/feature"
+  }
+});
+```
+
+## Notification Filters
+
+Available filters:
+- `exclude_fids`: Array of FIDs to exclude
+- `following_fid`: Only notify followers of specific FID
+- `minimum_user_score`: Quality threshold (0-1)
+- `near_location`: Geographic targeting
+  - `latitude`: number
+  - `longitude`: number
+  - `radius`: meters
+
+================================================================================
+SECTION 18: BUILDING BOTS & AGENTS
+================================================================================
+
+## Create Farcaster Bot
+
+```typescript
+// 1. Create managed signer for bot
+const signer = await client.createSigner();
+
+// 2. User approves signer
+// 3. Bot can now post
+
+// Simple bot that posts daily
+async function dailyPost() {
+  await client.publishCast({
+    signerUuid: process.env.BOT_SIGNER_UUID,
+    text: "Good morning Farcaster! ☀️"
+  });
+}
+
+// Schedule with cron
+```
+
+## Listen for @mentions
+
+```typescript
+// Setup webhook
+const webhook = await client.createWebhook({
+  name: "Bot Mentions",
+  url: "https://your-server.com/webhook",
+  eventTypes: ["cast.created"],
+  filters: {
+    mentioned_fids: [YOUR_BOT_FID]
+  }
+});
+
+// Handle webhook
+import express from 'express';
+const app = express();
+
+app.post('/webhook', async (req, res) => {
+  const event = req.body;
+  
+  if (event.type === 'cast.created') {
+    const cast = event.data;
+    
+    // Check if bot is mentioned
+    const isMentioned = cast.mentioned_profiles.some(
+      profile => profile.fid === YOUR_BOT_FID
+    );
+    
+    if (isMentioned) {
+      // Respond to mention
+      await client.publishCast({
+        signerUuid: process.env.BOT_SIGNER_UUID,
+        text: `@${cast.author.username} Thanks for the mention! 🤖`,
+        parent: cast.hash
+      });
+    }
+  }
+  
+  res.sendStatus(200);
+});
+
+app.listen(3000);
+```
+
+## Make Agents Prompt Transactions
+
+```typescript
+// Agent that helps users with transactions
+async function handleTransactionRequest(cast) {
+  const text = cast.text.toLowerCase();
+  
+  if (text.includes('send eth')) {
+    // Parse amount and recipient
+    const amount = extractAmount(text);
+    const recipient = extractRecipient(text);
+    
+    // Reply with transaction frame
+    await client.publishCast({
+      signerUuid: process.env.BOT_SIGNER_UUID,
+      text: `Send ${amount} ETH to ${recipient}?`,
+      parent: cast.hash,
+      embeds: [{
+        url: `https://your-app.com/tx/${transactionId}`
+      }]
+    });
+  }
+}
+```
+
+================================================================================
+SECTION 19: ONBOARDING NEW USERS
+================================================================================
+
+## Create New Farcaster Account
+
+```typescript
+const newAccount = await client.registerAccount({
+  username: "newuser",
+  email: "user@example.com",
+  custody_address: "0x..."
+});
+
+console.log(newAccount.fid);
+console.log(newAccount.signer);
+```
+
+## SIWN (Sign In With Neynar)
+
+Connect existing Farcaster accounts:
+
+```typescript
+// Frontend
+import { useNeynarAuth } from '@neynar/react';
+
+export default function LoginPage() {
+  const { signIn, user, isAuthenticated, signOut } = useNeynarAuth();
+
+  if (isAuthenticated) {
+    return (
+      <div>
+        <h1>Welcome, {user.display_name}!</h1>
+        <p>FID: {user.fid}</p>
+        <button onClick={signOut}>Sign Out</button>
+      </div>
+    );
+  }
+
+  return (
+    <button onClick={signIn}>
+      Sign in with Farcaster
+    </button>
+  );
+}
+```
+
+## Fetch Signers for User
+
+```typescript
+const signers = await client.fetchSigners({
+  fid: 3
+});
+
+console.log(signers);
+// Returns list of approved signers for user
+```
+
+## Add Verification
+
+```typescript
+// Add wallet verification for user
+await client.addVerification({
+  signerUuid: "your-signer-uuid",
+  address: "0x...",
+  protocol: "ethereum"
+});
+```
+
+================================================================================
+SECTION 20: WEBHOOKS
+================================================================================
+
+## Create Webhook in Dashboard
+
+1. Go to Neynar dashboard
+2. Navigate to Webhooks
+3. Create new webhook
+4. Configure events and filters
+
+## Create Webhook Programmatically
+
+```typescript
+const webhook = await client.createWebhook({
+  name: "My App Webhook",
+  url: "https://your-server.com/webhook",
+  eventTypes: [
+    "cast.created",
+    "reaction.created",
+    "follow.created",
+    "user.updated"
+  ],
+  filters: {
+    mentioned_fids: [3],
+    channel_ids: ["farcaster"]
+  }
+});
+
+console.log(webhook.webhook_id);
+console.log(webhook.secret); // Save this!
+```
+
+## Verify Webhook with HMAC
+
+```typescript
+import crypto from 'crypto';
+
+function verifyWebhookSignature(
+  payload: string,
+  signature: string,
+  secret: string
+): boolean {
+  const hmac = crypto.createHmac('sha256', secret);
+  const digest = hmac.update(payload).digest('hex');
+  
+  return crypto.timingSafeEqual(
+    Buffer.from(signature),
+    Buffer.from(digest)
+  );
+}
+
+// In your webhook handler
+app.post('/webhook', (req, res) => {
+  const signature = req.headers['x-neynar-signature'] as string;
+  const payload = JSON.stringify(req.body);
+  
+  if (!verifyWebhookSignature(payload, signature, WEBHOOK_SECRET)) {
+    return res.status(401).send('Invalid signature');
+  }
+  
+  // Process webhook
+  const event = req.body;
+  console.log('Event type:', event.type);
+  console.log('Event data:', event.data);
+  
+  res.sendStatus(200);
+});
+```
+
+## Webhook Event Types
+
+Available events:
+- `cast.created` - New cast posted
+- `reaction.created` - Like or recast
+- `follow.created` - New follow relationship
+- `follow.deleted` - Unfollow
+- `user.updated` - User profile updated
+- `channel.created` - New channel
+- `verification.added` - Wallet verification
+
+================================================================================
+SECTION 21: SPAM FILTERING & QUALITY
+================================================================================
+
+## Neynar User Score
+
+User score ranges from 0 to 1 (higher = better quality):
+
+```typescript
+const users = await client.fetchBulkUsers({ fids: [1, 2, 3] });
+
+users.users.forEach(user => {
+  console.log(`${user.username}: ${user.experimental.user_score}`);
+});
+
+// Filter by minimum score
+const highQualityUsers = users.users.filter(
+  user => user.experimental.user_score >= 0.5
+);
+```
+
+## Apply Quality Filters
+
+```typescript
+// When sending notifications
+await client.publishFrameNotifications({
+  targetFids: [],
+  filters: {
+    minimum_user_score: 0.5 // Only high-quality users
+  },
+  notification: { ... }
+});
+
+// When fetching feed
+const feed = await client.fetchFeed({
+  feedType: FeedType.Following,
+  fid: 3,
+  withRecasts: false, // Exclude recasts
+  limit: 50
+});
+
+// Client-side filtering
+const qualityCasts = feed.casts.filter(cast => {
+  return cast.author.experimental.user_score >= 0.5;
+});
+```
+
+## Rank High Quality Conversations
+
+```typescript
+function rankConversations(casts) {
+  return casts.sort((a, b) => {
+    // Score based on multiple factors
+    const scoreA = 
+      a.reactions.likes_count * 1 +
+      a.reactions.recasts_count * 2 +
+      a.replies.count * 1.5 +
+      a.author.experimental.user_score * 10;
+    
+    const scoreB = 
+      b.reactions.likes_count * 1 +
+      b.reactions.recasts_count * 2 +
+      b.replies.count * 1.5 +
+      b.author.experimental.user_score * 10;
+    
+    return scoreB - scoreA;
+  });
+}
+```
+
+================================================================================
+SECTION 22: DATA PRODUCTS
+================================================================================
+
+## REST API (Real-time)
+
+Best for: Most use cases, real-time data needs
+
+```typescript
+const client = new NeynarAPIClient(config);
+const data = await client.fetchFeed({ ... });
+```
+
+Pros:
+- Simple to use
+- Real-time data
+- Full API access
+
+Cons:
+- Rate limited
+- Pay per request
+- Network latency
+
+## Webhooks (Push-based)
+
+Best for: Event-driven applications, real-time updates
+
+```typescript
+const webhook = await client.createWebhook({ ... });
+```
+
+Pros:
+- Real-time notifications
+- No polling needed
+- Efficient
+
+Cons:
+- Requires webhook endpoint
+- Must handle delivery failures
+
+## Indexer Service (Self-hosted)
+
+Best for: Large-scale data needs, custom indexing
+
+Pros:
+- Full control
+- No rate limits
+- Custom queries
+
+Cons:
+- Infrastructure required
+- Maintenance needed
+- Complexity
+
+## Hosted SQL
+
+Best for: Analytics, complex queries, historical data
+
+```sql
+SELECT 
+  author.username,
+  COUNT(*) as cast_count,
+  SUM(reactions.likes_count) as total_likes
+FROM casts
+WHERE timestamp > '2024-01-01'
+GROUP BY author.username
+ORDER BY total_likes DESC
+LIMIT 10;
+```
+
+Pros:
+- Powerful queries
+- Historical data
+- Analytics-friendly
+
+Cons:
+- SQL knowledge required
+- Not real-time
+- Additional cost
+
+================================================================================
+SECTION 23: REACT INTEGRATION
+================================================================================
+
+## Install React Package
+
+```bash
+npm install @neynar/react
+```
+
+## Setup Provider
+
+```typescript
+import { NeynarAuthProvider } from '@neynar/react';
+
+export default function App({ Component, pageProps }) {
+  return (
+    <NeynarAuthProvider
+      apiKey={process.env.NEXT_PUBLIC_NEYNAR_API_KEY}
+      clientId={process.env.NEXT_PUBLIC_NEYNAR_CLIENT_ID}
+    >
+      <Component {...pageProps} />
+    </NeynarAuthProvider>
+  );
+}
+```
+
+## Use Authentication Hook
+
+```typescript
+import { useNeynarAuth } from '@neynar/react';
+
+export default function Profile() {
+  const { user, isAuthenticated, signIn, signOut } = useNeynarAuth();
+
+  if (!isAuthenticated) {
+    return <button onClick={signIn}>Sign In</button>;
+  }
+
+  return (
+    <div>
+      <img src={user.pfp_url} alt={user.display_name} />
+      <h1>{user.display_name}</h1>
+      <p>@{user.username}</p>
+      <p>FID: {user.fid}</p>
+      <button onClick={signOut}>Sign Out</button>
+    </div>
+  );
+}
+```
+
+## Use Feed Hook
+
+```typescript
+import { useFeed } from '@neynar/react';
+
+export default function Feed() {
+  const { feed, loading, error, loadMore } = useFeed({
+    feedType: 'following',
+    fid: 3,
+    limit: 25
+  });
+
+  if (loading) return <div>Loading...</div>;
+  if (error) return <div>Error: {error.message}</div>;
+
+  return (
+    <div>
+      {feed.casts.map(cast => (
+        <div key={cast.hash}>
+          <p><strong>@{cast.author.username}</strong></p>
+          <p>{cast.text}</p>
+          <p>{cast.reactions.likes_count} likes</p>
+        </div>
+      ))}
+      <button onClick={loadMore}>Load More</button>
+    </div>
+  );
+}
+```
+
+## Use User Hook
+
+```typescript
+import { useUser } from '@neynar/react';
+
+export default function UserProfile({ fid }) {
+  const { user, loading, error } = useUser({ fid });
+
+  if (loading) return <div>Loading...</div>;
+  if (error) return <div>Error</div>;
+
+  return (
+    <div>
+      <h1>{user.display_name}</h1>
+      <p>Followers: {user.follower_count}</p>
+      <p>Following: {user.following_count}</p>
+    </div>
+  );
+}
+```
+
+## Use Mini App Hook
+
+```typescript
+import { useMiniApp } from '@neynar/react';
+
+export default function MiniAppSetup() {
+  const { 
+    isSDKLoaded, 
+    addMiniApp, 
+    context,
+    openUrl,
+    close
+  } = useMiniApp();
+
+  return (
+    <div>
+      <button onClick={addMiniApp}>
+        Add to My Apps
+      </button>
+      <button onClick={() => openUrl('https://example.com')}>
+        Open URL
+      </button>
+      <button onClick={close}>
+        Close
+      </button>
+      {context && (
+        <p>Current user FID: {context.user.fid}</p>
+      )}
+    </div>
+  );
+}
+```
+
+================================================================================
+SECTION 24: ONCHAIN TRANSACTIONS
+================================================================================
+
+## Deploy Base Token with 1 API Call
+
+```typescript
+const token = await client.deployToken({
+  name: "My Token",
+  symbol: "MTK",
+  initialSupply: "1000000",
+  chain: "base"
+});
+
+console.log(token.contractAddress);
+console.log(token.transactionHash);
+```
+
+## Mint NFTs for Farcaster Users
+
+```typescript
+const nft = await client.mintNFT({
+  recipientFid: 3,
+  tokenUri: "ipfs://QmX...",
+  contractAddress: "0x...",
+  chain: "base"
+});
+
+console.log(nft.transactionHash);
+```
+
+## Get User Balances by FID
+
+```typescript
+const balances = await client.fetchUserBalances({
+  fid: 3,
+  chains: ["ethereum", "base", "optimism", "polygon"]
+});
+
+console.log(balances);
+// Returns:
+// {
+//   ethereum: { eth: "1.5", tokens: [...] },
+//   base: { eth: "0.5", tokens: [...] },
+//   ...
+// }
+```
+
+## Find Relevant Token Holders
+
+```typescript
+// Find Farcaster users who hold specific token
+const holders = await client.fetchRelevantHolders({
+  contractAddress: "0x...",
+  chain: "base",
+  limit: 100
+});
+
+holders.users.forEach(user => {
+  console.log(`${user.username}: ${user.balance} tokens`);
+});
+```
+
+================================================================================
+SECTION 25: FARCASTER DATA ON BASE
+================================================================================
+
+## ETH Address to FID Contract
+
+On-chain contract to resolve ETH address to FID:
+
+```solidity
+// Contract address on Base: 0x...
+interface IFarcasterRegistry {
+  function getFid(address custody) external view returns (uint256);
+  function getCustodyAddress(uint256 fid) external view returns (address);
+}
+```
+
+## User Score Contract on Base
+
+```solidity
+interface IUserScore {
+  function getScore(uint256 fid) external view returns (uint256);
+  // Returns score 0-100
+}
+```
+
+Usage example:
+
+```typescript
+import { ethers } from 'ethers';
+
+const provider = new ethers.JsonRpcProvider('https://base.llamarpc.com');
+const contract = new ethers.Contract(
+  '0x...', // User Score Contract
+  ['function getScore(uint256 fid) view returns (uint256)'],
+  provider
+);
+
+const score = await contract.getScore(3);
+console.log('User score:', score);
+```
+
+================================================================================
+SECTION 26: NOTIFICATIONS API
+================================================================================
+
+## Fetch Notifications for FID
+
+```typescript
+const notifications = await client.fetchNotifications({
+  fid: 3,
+  limit: 50
+});
+
+notifications.notifications.forEach(notif => {
+  console.log(notif.type); // follow, mention, like, recast
+  console.log(notif.actor); // Who performed the action
+  console.log(notif.object); // What was acted upon
+});
+```
+
+## Fetch Channel Notifications
+
+```typescript
+const channelNotifs = await client.fetchChannelNotifications({
+  fid: 3,
+  channelId: "farcaster",
+  limit: 25
+});
+```
+
+## Mark Notifications as Read
+
+```typescript
+await client.markNotificationsAsSeen({
+  fid: 3,
+  notificationIds: ["notif1", "notif2"]
+});
+```
+
+================================================================================
+SECTION 27: DIRECT CASTS (PRIVATE MESSAGES)
+================================================================================
+
+## Send Direct Cast
+
+```typescript
+await client.publishDirectCast({
+  signerUuid: "your-signer-uuid",
+  recipientFid: 6131,
+  message: "Hello! This is a private message."
+});
+```
+
+## Receive Direct Casts via Webhook
+
+```typescript
+const webhook = await client.createWebhook({
+  name: "Direct Messages",
+  url: "https://your-server.com/webhook",
+  eventTypes: ["direct_cast.created"]
+});
+
+// Handle incoming DMs
+app.post('/webhook', async (req, res) => {
+  const event = req.body;
+  
+  if (event.type === 'direct_cast.created') {
+    const dm = event.data;
+    console.log(`From: ${dm.sender.username}`);
+    console.log(`Message: ${dm.message}`);
+    
+    // Auto-reply
+    await client.publishDirectCast({
+      signerUuid: process.env.SIGNER_UUID,
+      recipientFid: dm.sender.fid,
+      message: "Thanks for your message!"
+    });
+  }
+  
+  res.sendStatus(200);
+});
+```
+
+================================================================================
+SECTION 28: STORAGE DATA
+================================================================================
+
+## Get Storage Allocation
+
+```typescript
+const storage = await client.fetchStorageAllocations({
+  fid: 3
+});
+
+console.log(storage);
+// Returns:
+// {
+//   units: 5,
+//   used: 2300,
+//   limit: 5000,
+//   casts: 1200,
+//   reactions: 800,
+//   links: 300
+// }
+```
+
+## Buy Storage Units
+
+```typescript
+await client.buyStorage({
+  fid: 3,
+  units: 5
+});
+```
+
+================================================================================
+SECTION 29: FARCASTER ACTIONS
+================================================================================
+
+## Actions Spec
+
+Farcaster Actions allow users to take actions directly from casts.
+
+## Create Action
+
+```json
+{
+  "name": "Vote",
+  "icon": "thumbs-up",
+  "description": "Vote on this proposal",
+  "aboutUrl": "https://your-app.com/about",
+  "action": {
+    "type": "post",
+    "url": "https://your-app.com/api/vote"
+  }
+}
+```
+
+## Publish Action
+
+```typescript
+const action = await client.publishAction({
+  name: "Vote",
+  icon: "thumbs-up",
+  description: "Vote on this proposal",
+  aboutUrl: "https://your-app.com/about",
+  actionUrl: "https://your-app.com/api/vote"
+});
+
+console.log(action.actionId);
+```
+
+## Handle Action Request
+
+```typescript
+app.post('/api/vote', async (req, res) => {
+  const { fid, castHash, buttonIndex } = req.body;
+  
+  // Process vote
+  await recordVote(fid, castHash, buttonIndex);
+  
+  // Return response
+  res.json({
+    message: "Vote recorded!"
+  });
+});
+```
+
+================================================================================
+SECTION 30: NETWORK HEALTH
+================================================================================
+
+## Farcaster Event Propagation
+
+Monitor how quickly events propagate through the network:
+
+```typescript
+const health = await client.fetchNetworkHealth();
+
+console.log(health);
+// Returns:
+// {
+//   averagePropagationTime: 1200, // ms
+//   hubsOnline: 45,
+//   lastBlockTime: "2024-11-13T12:00:00Z"
+// }
+```
+
+================================================================================
+SECTION 31: HYPERSUB SUBSCRIPTIONS
+================================================================================
+
+## Find Hypersub Subscriptions
+
+```typescript
+const subscriptions = await client.fetchHypersubSubscriptions({
+  fid: 3
+});
+
+subscriptions.forEach(sub => {
+  console.log(`Subscribed to: ${sub.name}`);
+  console.log(`Expires: ${sub.expiresAt}`);
+  console.log(`Tier: ${sub.tier}`);
+});
+```
+
+================================================================================
+SECTION 32: BEST PRACTICES
+================================================================================
+
+## Security
+
+1. API KEY MANAGEMENT
+   - Never commit API keys to version control
+   - Use environment variables
+   - Rotate keys regularly
+   - Different keys for dev/prod
+
+2. WEBHOOK VERIFICATION
+   - Always verify HMAC signatures
+   - Reject invalid signatures
+   - Use constant-time comparison
+
+3. INPUT VALIDATION
+   - Validate all user input
+   - Sanitize before display
+   - Prevent injection attacks
+
+4. SIGNER SECURITY
+   - Store signer UUIDs securely
+   - Never expose in client code
+   - Implement proper access control
+
+## Performance
+
+1. CACHING
+   - Cache frequently accessed data
+   - User profiles, channels
+   - Set appropriate TTL
+
+2. BATCH REQUESTS
+   - Use bulk endpoints when possible
+   - fetchBulkUsers instead of multiple fetchUser calls
+   - Reduces API calls and latency
+
+3. PAGINATION
+   - Always use pagination for large datasets
+   - Don't fetch all data at once
+   - Implement cursor-based pagination
+
+4. RATE LIMITING
+   - Monitor your usage
+   - Implement client-side rate limiting
+   - Handle 429 responses gracefully
+
+## Error Handling
+
+```typescript
+async function fetchDataSafely() {
+  try {
+    const data = await client.fetchFeed({ ... });
+    return { success: true, data };
+  } catch (error) {
+    if (error.response?.status === 429) {
+      // Rate limited - retry with backoff
+      console.error('Rate limited, retry later');
+    } else if (error.response?.status === 401) {
+      // Invalid API key
+      console.error('Invalid API key');
+    } else {
+      // Other error
+      console.error('Error:', error.message);
+    }
+    return { success: false, error };
+  }
+}
+```
+
+## Retry Logic
+
+```typescript
+async function fetchWithRetry(fn, maxRetries = 3) {
+  for (let i = 0; i < maxRetries; i++) {
+    try {
+      return await fn();
+    } catch (error) {
+      if (i === maxRetries - 1) throw error;
+      
+      // Exponential backoff
+      const delay = Math.pow(2, i) * 1000;
+      await new Promise(resolve => setTimeout(resolve, delay));
+    }
+  }
+}
+
+// Usage
+const data = await fetchWithRetry(() => 
+  client.fetchFeed({ ... })
+);
+```
+
+## Logging
+
+```typescript
+// Structured logging
+function logAPICall(method, params, result) {
+  console.log(JSON.stringify({
+    timestamp: new Date().toISOString(),
+    method,
+    params,
+    success: result.success,
+    duration: result.duration,
+    error: result.error
+  }));
+}
+```
+
+================================================================================
+SECTION 33: COMMON PATTERNS
+================================================================================
+
+## Pattern 1: User Profile Page
+
+```typescript
+async function fetchUserProfile(fid: number) {
+  // Fetch user data
+  const { users } = await client.fetchBulkUsers({ 
+    fids: [fid] 
+  });
+  const user = users[0];
+  
+  // Fetch user's casts
+  const { casts } = await client.fetchUserCasts({ 
+    fid,
+    limit: 50 
+  });
+  
+  // Fetch followers
+  const followers = await client.fetchUserFollowers({ 
+    fid,
+    limit: 100 
+  });
+  
+  return {
+    user,
+    casts,
+    followers
+  };
+}
+```
+
+## Pattern 2: Real-time Feed
+
+```typescript
+async function setupRealtimeFeed(channelId: string) {
+  // Initial fetch
+  const feed = await client.fetchChannelFeed({
+    channelId,
+    limit: 25
+  });
+  
+  // Setup webhook for new casts
+  await client.createWebhook({
+    name: `${channelId} Feed`,
+    url: "https://your-server.com/webhook",
+    eventTypes: ["cast.created"],
+    filters: {
+      channel_ids: [channelId]
+    }
+  });
+  
+  return feed;
+}
+
+// Webhook handler adds new casts in real-time
+app.post('/webhook', (req, res) => {
+  const cast = req.body.data;
+  // Push to clients via WebSocket, SSE, etc.
+  broadcastToClients(cast);
+  res.sendStatus(200);
+});
+```
+
+## Pattern 3: Notification Bot
+
+```typescript
+async function createNotificationBot() {
+  // Create signer for bot
+  const signer = await client.createSigner();
+  
+  // Setup webhook for mentions
+  await client.createWebhook({
+    name: "Bot Mentions",
+    url: "https://your-server.com/webhook",
+    eventTypes: ["cast.created"],
+    filters: {
+      mentioned_fids: [BOT_FID]
+    }
+  });
+  
+  return signer;
+}
+
+// Handle mentions and reply
+app.post('/webhook', async (req, res) => {
+  const cast = req.body.data;
+  
+  // Process request
+  const response = await processUserRequest(cast.text);
+  
+  // Reply
+  await client.publishCast({
+    signerUuid: process.env.BOT_SIGNER_UUID,
+    text: response,
+    parent: cast.hash
+  });
+  
+  res.sendStatus(200);
+});
+```
+
+## Pattern 4: Viral Mini App
+
+```typescript
+// Mini App with sharing built-in
+export default function ViralMiniApp() {
+  const [score, setScore] = useState(0);
+  const { isSDKLoaded } = useMiniApp();
+
+  const handleShare = async () => {
+    if (!isSDKLoaded) return;
+    
+    // Create shareable cast with score
+    const shareUrl = `https://your-miniapp.com/challenge?score=${score}`;
+    
+    // Open composer with pre-filled text
+    await sdk.actions.openUrl(
+      `https://warpcast.com/~/compose?text=${encodeURIComponent(
+        `I scored ${score} points! Can you beat me? 🎮`
+      )}&embeds[]=${encodeURIComponent(shareUrl)}`
+    );
+  };
+
+  return (
+    <div>
+      <h1>Score: {score}</h1>
+      <button onClick={handleShare}>Share Score</button>
+    </div>
+  );
+}
+```
+
+## Pattern 5: Token-Gated Content
+
+```typescript
+async function checkTokenAccess(fid: number) {
+  // Get user's balances
+  const balances = await client.fetchUserBalances({
+    fid,
+    chains: ["base"]
+  });
+  
+  // Check if user holds required token
+  const hasAccess = balances.base.tokens.some(
+    token => 
+      token.contractAddress === REQUIRED_TOKEN_ADDRESS &&
+      parseFloat(token.balance) >= MINIMUM_BALANCE
+  );
+  
+  return hasAccess;
+}
+
+// In your API route
+app.get('/api/premium-content', async (req, res) => {
+  const { fid } = req.query;
+  
+  const hasAccess = await checkTokenAccess(fid);
+  
+  if (!hasAccess) {
+    return res.status(403).json({
+      error: "You need to hold tokens to access this content"
+    });
+  }
+  
+  res.json({ content: "Premium content here" });
+});
+```
+
+================================================================================
+SECTION 34: TESTING & DEBUGGING
+================================================================================
+
+## Enable Developer Mode
+
+In Farcaster client:
+1. Go to Settings
+2. Enable Developer Mode
+3. Access Mini App devtools
+
+## Test Mini App Locally
+
+```bash
+# Run local dev server
+npm run dev
+
+# Access via Mini App with localhost URL
+# Use ngrok for mobile testing
+npx ngrok http 3000
+```
+
+## Debug SDK Issues
+
+```javascript
+// Enable SDK logging
+sdk.setLogLevel('debug');
+
+// Listen to all events
+sdk.on('*', (event, data) => {
+  console.log('SDK Event:', event, data);
+});
+
+// Check SDK status
+console.log('SDK loaded:', sdk.isLoaded);
+console.log('Context:', await sdk.context);
+```
+
+## Test Webhooks Locally
+
+```bash
+# Use ngrok to expose local server
+npx ngrok http 3000
+
+# Update webhook URL to ngrok URL
+# Test with curl
+curl -X POST https://your-ngrok-url.ngrok.io/webhook \
+  -H "Content-Type: application/json" \
+  -d '{"type":"cast.created","data":{...}}'
+```
+
+## Monitor API Usage
+
+```typescript
+// Wrap client with logging
+const originalFetchFeed = client.fetchFeed;
+client.fetchFeed = async function(...args) {
+  const start = Date.now();
+  try {
+    const result = await originalFetchFeed.apply(this, args);
+    console.log(`fetchFeed took ${Date.now() - start}ms`);
+    return result;
+  } catch (error) {
+    console.error(`fetchFeed failed:`, error);
+    throw error;
+  }
+};
+```
+
+================================================================================
+SECTION 35: MIGRATION & UPDATES
+================================================================================
+
+## Migrating from Old SDK
+
+If you're using an older SDK version:
+
+```bash
+# Uninstall old version
+npm uninstall @farcaster/frame-sdk
+
+# Install latest
+npm install @farcaster/frame-sdk@latest
+
+# Update imports
+# Old: import { init } from '@farcaster/frame-sdk';
+# New: import sdk from '@farcaster/frame-sdk';
+```
+
+## Breaking Changes
+
+Check SDK changelog for breaking changes:
+- Method renames
+- Parameter changes
+- Deprecated features
+
+## Domain Migration
+
+When changing Mini App domain:
+
+```typescript
+// Sign manifest with old domain
+const signature = await sdk.experimental.signManifest({
+  domain: 'old-domain.com'
+});
+
+// Submit migration request with signature
+await client.migrateAppDomain({
+  oldDomain: 'old-domain.com',
+  newDomain: 'new-domain.com',
+  signature
+});
+```
+
+================================================================================
+SECTION 36: MONETIZATION STRATEGIES
+================================================================================
+
+## Strategy 1: Subscription Model
+
+```typescript
+// Check if user has active subscription
+async function checkSubscription(fid: number) {
+  const subs = await client.fetchHypersubSubscriptions({ fid });
+  return subs.some(sub => 
+    sub.contractAddress === YOUR_HYPERSUB_CONTRACT &&
+    new Date(sub.expiresAt) > new Date()
+  );
+}
+
+// Gate features behind subscription
+if (await checkSubscription(userFid)) {
+  // Grant premium access
+}
+```
+
+## Strategy 2: Token-Based Access
+
+```typescript
+// Require token holding for features
+const balances = await client.fetchUserBalances({
+  fid: userFid,
+  chains: ["base"]
+});
+
+const tokenBalance = balances.base.tokens.find(
+  t => t.contractAddress === YOUR_TOKEN
+)?.balance || "0";
+
+if (parseFloat(tokenBalance) >= MINIMUM_TOKENS) {
+  // Grant access
+}
+```
+
+## Strategy 3: Transaction Fees
+
+```typescript
+// Take small fee on transactions
+const PLATFORM_FEE = 0.01; // 1%
+
+async function processTransaction(amount: number) {
+  const fee = amount * PLATFORM_FEE;
+  const netAmount = amount - fee;
+  
+  // Process payment
+  // Send netAmount to recipient
+  // Keep fee as revenue
+}
+```
+
+## Strategy 4: Sponsored Content
+
+```typescript
+// Show sponsored casts in feed
+async function getFeedWithSponsors(fid: number) {
+  const feed = await client.fetchFeed({ fid, ... });
+  
+  // Insert sponsored content every N casts
+  const withSponsors = insertSponsoredContent(feed.casts, 5);
+  
+  return withSponsors;
+}
+```
+
+================================================================================
+SECTION 37: ADVANCED FEATURES
+================================================================================
+
+## Custom Feed Algorithm
+
+```typescript
+async function buildCustomFeed(fid: number) {
+  // Fetch multiple feed types
+  const [following, trending, channel] = await Promise.all([
+    client.fetchFeed({ feedType: FeedType.Following, fid }),
+    client.fetchTrendingFeed({ limit: 25 }),
+    client.fetchChannelFeed({ channelId: "farcaster" })
+  ]);
+  
+  // Merge and rank
+  const allCasts = [
+    ...following.casts,
+    ...trending.casts,
+    ...channel.casts
+  ];
+  
+  // Custom ranking algorithm
+  const ranked = allCasts.sort((a, b) => {
+    const scoreA = calculateRelevanceScore(a, fid);
+    const scoreB = calculateRelevanceScore(b, fid);
+    return scoreB - scoreA;
+  });
+  
+  // Deduplicate
+  const seen = new Set();
+  return ranked.filter(cast => {
+    if (seen.has(cast.hash)) return false;
+    seen.add(cast.hash);
+    return true;
+  });
+}
+
+function calculateRelevanceScore(cast, viewerFid) {
+  let score = 0;
+  
+  // Engagement signals
+  score += cast.reactions.likes_count * 1;
+  score += cast.reactions.recasts_count * 2;
+  score += cast.replies.count * 1.5;
+  
+  // Author quality
+  score += cast.author.experimental.user_score * 10;
+  
+  // Recency (decay over time)
+  const ageHours = (Date.now() - new Date(cast.timestamp)) / 3600000;
+  score *= Math.exp(-ageHours / 24);
+  
+  // Social connection boost
+  if (cast.viewer_context?.followed_by) {
+    score *= 1.5;
+  }
+  
+  return score;
+}
+```
+
+## AI-Powered Responses
+
+```typescript
+async function createAIBot() {
+  await client.createWebhook({
+    name: "AI Bot",
+    url: "https://your-server.com/ai-webhook",
+    eventTypes: ["cast.created"],
+    filters: {
+      mentioned_fids: [BOT_FID]
+    }
+  });
+}
+
+app.post('/ai-webhook', async (req, res) => {
+  const cast = req.body.data;
+  
+  // Get AI response
+  const aiResponse = await getAIResponse(cast.text);
+  
+  // Reply with AI-generated content
+  await client.publishCast({
+    signerUuid: process.env.BOT_SIGNER_UUID,
+    text: aiResponse,
+    parent: cast.hash
+  });
+  
+  res.sendStatus(200);
+});
+```
+
+## Social Graph Analysis
+
+```typescript
+async function analyzeSocialGraph(fid: number) {
+  // Get user's followers and following
+  const [followers, following] = await Promise.all([
+    client.fetchUserFollowers({ fid, limit: 1000 }),
+    client.fetchUserFollowing({ fid, limit: 1000 })
+  ]);
+  
+  // Find mutual follows
+  const followerFids = new Set(followers.users.map(u => u.fid));
+  const mutualFollows = following.users.filter(u => 
+    followerFids.has(u.fid)
+  );
+  
+  // Calculate engagement rate
+  const casts = await client.fetchUserCasts({ fid, limit: 100 });
+  const totalEngagement = casts.casts.reduce((sum, cast) => 
+    sum + cast.reactions.likes_count + cast.reactions.recasts_count,
+    0
+  );
+  const engagementRate = totalEngagement / casts.casts.length;
+  
+  return {
+    followerCount: followers.users.length,
+    followingCount: following.users.length,
+    mutualFollowCount: mutualFollows.length,
+    engagementRate,
+    influence: calculateInfluence(followers, engagementRate)
+  };
+}
+```
+
+## Multi-Chain Integration
+
+```typescript
+async function setupMultiChain() {
+  // Support Ethereum, Base, Optimism, Polygon
+  const chains = ["ethereum", "base", "optimism", "polygon"];
+  
+  // Get user balances across all chains
+  const balances = await client.fetchUserBalances({
+    fid: userFid,
+    chains
+  });
+  
+  // Aggregate total value
+  let totalValue = 0;
+  chains.forEach(chain => {
+    totalValue += calculateChainValue(balances[chain]);
+  });
+  
+  return {
+    balances,
+    totalValue,
+    preferredChain: determinePreferredChain(balances)
+  };
+}
+```
+
+================================================================================
+SECTION 38: PRODUCTION CHECKLIST
+================================================================================
+
+Before launching your Mini App or Farcaster application:
+
+## Security ✓
+- [ ] API keys in environment variables
+- [ ] Webhook signatures verified
+- [ ] Input validation implemented
+- [ ] XSS prevention in place
+- [ ] Rate limiting configured
+- [ ] HTTPS enforced
+
+## Performance ✓
+- [ ] Caching strategy implemented
+- [ ] Database queries optimized
+- [ ] Images optimized
+- [ ] Lazy loading for heavy content
+- [ ] CDN configured
+- [ ] Monitoring set up
+
+## User Experience ✓
+- [ ] Loading states everywhere
+- [ ] Error messages clear and helpful
+- [ ] Mobile responsive
+- [ ] Accessibility tested
+- [ ] Haptic feedback implemented
+- [ ] Smooth animations
+
+## Functionality ✓
+- [ ] Authentication working
+- [ ] All SDK features tested
+- [ ] Webhooks receiving events
+- [ ] Notifications sending
+- [ ] Wallet integration working
+- [ ] Share functionality tested
+
+## Compliance ✓
+- [ ] Privacy policy published
+- [ ] Terms of service published
+- [ ] Data retention policy defined
+- [ ] User consent mechanisms
+- [ ] GDPR/CCPA compliant (if applicable)
+
+## Monitoring ✓
+- [ ] Error tracking (Sentry, etc.)
+- [ ] Analytics set up
+- [ ] API usage monitoring
+- [ ] Performance monitoring
+- [ ] Uptime monitoring
+- [ ] Alert systems configured
+
+## Documentation ✓
+- [ ] User guide written
+- [ ] API documentation complete
+- [ ] Code commented
+- [ ] README comprehensive
+- [ ] Changelog maintained
+
+================================================================================
+SECTION 39: RESOURCES & LINKS
+================================================================================
+
+## Official Documentation
+- Farcaster Mini Apps: https://miniapps.farcaster.xyz/
+- Neynar Docs: https://docs.neynar.com/
+- Farcaster Protocol: https://docs.farcaster.xyz/
+
+## SDKs & Libraries
+- Mini Apps SDK: npm install @farcaster/frame-sdk
+- Neynar Node.js SDK: npm install @neynar/nodejs-sdk
+- Neynar React SDK: npm install @neynar/react
+
+## GitHub Repositories
+- Neynar: https://github.com/neynarxyz
+- Farcaster: https://github.com/farcasterxyz
+
+## Community
+- Neynar Developer Slack
+- Farcaster Discord
+- /farcaster channel on Warpcast
+- /fc-devs channel on Warpcast
+
+## Tools & Services
+- Neynar Dashboard: https://neynar.com/dashboard
+- Frame Studio: https://neynar.com/frame-studio
+- Mini App Examples: https://miniapps.farcaster.xyz/examples
+
+## Additional Reading
+- Farcaster Blog: https://www.farcaster.xyz/blog
+- Neynar Blog: https://neynar.com/blog
+- Mini Apps Rewards: https://miniapps.farcaster.xyz/rewards
+
+================================================================================
+SECTION 40: GLOSSARY
+================================================================================
+
+CAST - Unit of content on Farcaster (like a tweet)
+
+CHANNEL - Topic-based community on Farcaster
+
+EMBED - Media or content embedded in a cast
+
+FID - Farcaster ID, permanent numerical identifier for users
+
+FRAME - Interactive embed type in Farcaster
+
+HASH - Unique identifier for a cast
+
+HUB - Node in the Farcaster network that stores and serves data
+
+MINI APP - Web application that runs within Farcaster clients
+
+NEYNAR - Developer platform for building on Farcaster
+
+REACTION - Like or recast on a cast
+
+RECAST - Sharing/retweeting a cast
+
+SDK - Software Development Kit
+
+SIGNER - Cryptographic key that allows writing data to Farcaster
+
+SIWN - Sign In With Neynar
+
+VERIFICATION - Proof of ownership of a wallet address
+
+VIEWER CONTEXT - Relationship between viewing user and content
+
+WARPCAST - Official Farcaster client
+
+WEBHOOK - HTTP callback for real-time event notifications
+
+================================================================================
+END OF DOCUMENTATION
+================================================================================
+
+This comprehensive guide covers all aspects of building on Farcaster using
+Mini Apps and Neynar. For the latest updates and detailed API references,
+always consult the official documentation:
+
+- https://miniapps.farcaster.xyz/
+- https://docs.neynar.com/
+
+Last Updated: November 2024
+Version: 1.0
+
+
