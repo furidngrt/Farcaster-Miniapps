@@ -1,0 +1,47 @@
+{
+  "accountAssociation": {
+    "header": "",
+    "payload": "",
+    "signature": ""
+  },
+  "miniapp": {
+    "version": "1",
+    "name": "Simple Mini App",
+    "iconUrl": "https://your-domain.com/icon.png",
+    "splashImageUrl": "https://your-domain.com/splash.png",
+    "splashBackgroundColor": "#8A63D2",
+    "homeUrl": "https://your-domain.com",
+    "webhookUrl": "https://your-domain.com/api/webhooks",
+    "subtitle": "A comprehensive Farcaster Mini App",
+    "description": "Simple yet comprehensive Farcaster Mini App demonstrating all core features including wallet integration, notifications, and SDK actions.",
+    "screenshotUrls": [
+      "https://your-domain.com/screenshot1.png",
+      "https://your-domain.com/screenshot2.png",
+      "https://your-domain.com/screenshot3.png"
+    ],
+    "primaryCategory": "developer_tools",
+    "tags": [
+      "demo",
+      "wallet",
+      "notifications",
+      "developer"
+    ],
+    "heroImageUrl": "https://your-domain.com/hero.png",
+    "tagline": "Learn by example",
+    "ogTitle": "Simple Mini App - Farcaster",
+    "ogDescription": "A comprehensive example of Farcaster Mini App with all features",
+    "ogImageUrl": "https://your-domain.com/og.png",
+    "requiredChains": [
+      "eip155:1",
+      "eip155:8453",
+      "eip155:10",
+      "eip155:137"
+    ],
+    "requiredCapabilities": [
+      "actions.signIn",
+      "wallet.getEthereumProvider",
+      "actions.addMiniApp"
+    ]
+  }
+}
+
